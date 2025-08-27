@@ -27,6 +27,12 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+// Import routes
+const authRoutes = require('./routes/user/auth');
+
+// Use routes
+app.use('/api/auth', authRoutes);
+
 // Routes will be added here
 app.get('/', (req, res) => {
   res.json({ message: 'Welcome to FiscalFlow API' });
