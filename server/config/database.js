@@ -2,10 +2,15 @@
 const { Pool } = require('pg');
 require('dotenv').config();
 
-// Database configuration
+// Database configuration using individual parameters to force IPv4
 const dbConfig = {
-  connectionString: process.env.DATABASE_URL,
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+  host: process.env.DB_HOST,
+  port: process.env.DB_PORT,
+  database: process.env.DB_NAME,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  ssl: { rejectUnauthorized: false },
+  family: 4  // Force IPv4
 };
 
 // Create connection pool
@@ -15,16 +20,16 @@ const pool = new Pool(dbConfig);
 const testConnection = async () => {
   try {
     const client = await pool.connect();
-    console.log('✅ Database connected successfully');
+    console.log('Database connected successfully');
     
     // Test query
     const result = await client.query('SELECT NOW()');
-    console.log('📅 Database time:', result.rows[0].now);
+    console.log('Database time:', result.rows[0].now);
     
     client.release();
     return true;
   } catch (error) {
-    console.error('❌ Database connection failed:', error.message);
+    console.error('Database connection failed:', error.message);
     return false;
   }
 };
@@ -35,10 +40,10 @@ const query = async (text, params) => {
   try {
     const res = await pool.query(text, params);
     const duration = Date.now() - start;
-    console.log('📊 Query executed:', { text, duration, rows: res.rowCount });
+    console.log('Query executed:', { text, duration, rows: res.rowCount });
     return res;
   } catch (error) {
-    console.error('❌ Query error:', error.message);
+    console.error('Query error:', error.message);
     throw error;
   }
 };
