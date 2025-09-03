@@ -32,9 +32,9 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // Token expired or invalid
+      // Token expired or invalid - just remove from localStorage
+      // The store will handle the logout when the request fails
       localStorage.removeItem('fiscalflow-token')
-      useAuthStore.getState().logout()
     }
     return Promise.reject(error)
   }
