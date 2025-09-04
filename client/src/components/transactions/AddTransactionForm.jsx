@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { PlusIcon, DollarSignIcon } from 'lucide-react'
 import useAuthStore from '../../store/authStore'
 import { getCurrencySymbol } from '../../utils/currency'
+import { transactionService } from '../../services/transactionService'
 
 const AddTransactionForm = ({ onTransactionAdded }) => {
   const [isOpen, setIsOpen] = useState(false)
@@ -49,39 +50,51 @@ const AddTransactionForm = ({ onTransactionAdded }) => {
     setIsLoading(true)
 
     try {
-      // For now, we'll simulate the API call
-      // In the next step, we'll connect this to the actual API
-      console.log('Transaction data to submit:', {
-        ...formData,
-        currency: userCurrency // Include user's currency
-      })
-      
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      
-      // Reset form
-      setFormData({
-        type: 'expense',
-        amount: '',
-        description: '',
-        category: 'Food & Dining',
-        date: new Date().toISOString().split('T')[0]
-      })
-      
-      // Close form
-      setIsOpen(false)
-      
-      // Notify parent component
-      if (onTransactionAdded) {
-        onTransactionAdded()
+      // Prepare transaction data for API
+      const transactionData = {
+        type: formData.type,
+        amount: parseFloat(formData.amount),
+        description: formData.description,
+        category: formData.category,
+        date: formData.date,
+        currency: userCurrency
       }
+
+      console.log('Submitting transaction:', transactionData)
       
-      // Show success message (we'll improve this later)
-      alert('Transaction added successfully!')
+      // Call API to create transaction
+      const result = await transactionService.createTransaction(transactionData)
+      
+      if (result.success) {
+        // Reset form
+        setFormData({
+          type: 'expense',
+          amount: '',
+          description: '',
+          category: 'Food & Dining',
+          date: new Date().toISOString().split('T')[0]
+        })
+        
+        // Close form
+        setIsOpen(false)
+        
+        // Notify parent component to refresh data
+        if (onTransactionAdded) {
+          onTransactionAdded()
+        }
+        
+        // Show success message
+        alert(`Transaction added successfully! ${formData.type === 'income' ? 'Income' : 'Expense'} of ${currencySymbol}${formData.amount}`)
+        
+      } else {
+        // Show error message
+        alert(`Error: ${result.error}`)
+        console.error('Transaction creation failed:', result.error)
+      }
       
     } catch (error) {
       console.error('Error adding transaction:', error)
-      alert('Failed to add transaction. Please try again.')
+      alert('Failed to add transaction. Please check your connection and try again.')
     } finally {
       setIsLoading(false)
     }
