@@ -1,25 +1,54 @@
 // src/App.jsx
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import Auth from './pages/Auth'
 import Dashboard from './pages/Dashboard'
 import ProtectedRoute from './components/common/ProtectedRoute'
 import useAuthStore from './store/authStore'
 
 function App() {
-  const { isAuthenticated, verifyToken } = useAuthStore()
+  const { isAuthenticated, verifyToken, isLoading } = useAuthStore()
+  const [hasInitialized, setHasInitialized] = useState(false)
 
   useEffect(() => {
-    // Check for existing token on app load
-    verifyToken()
-  }, [verifyToken])
+    // Only verify token once on app load
+    const initializeAuth = async () => {
+      if (!hasInitialized) {
+        await verifyToken()
+        setHasInitialized(true)
+      }
+    }
+
+    initializeAuth()
+  }, []) // Empty dependency array - only run once
+
+  // Show loading screen while initializing
+  if (!hasInitialized || isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading FiscalFlow...</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <Router>
       <div className="App">
         <Routes>
           {/* Public Routes */}
-          <Route path="/auth" element={<Auth />} />
+          <Route 
+            path="/auth" 
+            element={
+              isAuthenticated ? <Navigate to="/dashboard" replace /> : <Auth />
+            } 
+          />
+          
+          {/* Redirect /login and /register to /auth for convenience */}
+          <Route path="/login" element={<Navigate to="/auth" replace />} />
+          <Route path="/register" element={<Navigate to="/auth" replace />} />
           
           {/* Protected Routes */}
           <Route 
