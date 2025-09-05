@@ -1,26 +1,12 @@
 // src/components/common/ProtectedRoute.jsx
-import { useEffect, useState } from 'react'
 import { Navigate } from 'react-router-dom'
 import useAuthStore from '../../store/authStore'
 
 const ProtectedRoute = ({ children }) => {
-  const { isAuthenticated, isLoading, verifyToken } = useAuthStore()
-  const [isVerifying, setIsVerifying] = useState(true)
-
-  useEffect(() => {
-    const checkAuth = async () => {
-      if (!isAuthenticated) {
-        // Try to verify token from localStorage
-        await verifyToken()
-      }
-      setIsVerifying(false)
-    }
-
-    checkAuth()
-  }, [isAuthenticated, verifyToken])
+  const { isAuthenticated, isLoading } = useAuthStore()
 
   // Show loading spinner while verifying token
-  if (isVerifying || isLoading) {
+  if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">

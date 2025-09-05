@@ -22,9 +22,7 @@ api.interceptors.request.use(
     }
     return config
   },
-  (error) => {
-    return Promise.reject(error)
-  }
+  (error) => Promise.reject(error)
 )
 
 // Response interceptor to handle token expiration
@@ -32,8 +30,6 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // Token expired or invalid - just remove from localStorage
-      // The store will handle the logout when the request fails
       localStorage.removeItem('fiscalflow-token')
     }
     return Promise.reject(error)
@@ -55,19 +51,13 @@ const useAuthStore = create(
       setError: (error) => set({ error }),
       clearError: () => set({ error: null }),
 
-      // Login function
+      // Login
       login: async (email, password) => {
         set({ isLoading: true, error: null })
-        
         try {
-          const response = await api.post('/auth/login', {
-            email,
-            password,
-          })
-
+          const response = await api.post('/auth/login', { email, password })
           const { token, user } = response.data
 
-          // Store token in localStorage
           localStorage.setItem('fiscalflow-token', token)
 
           set({
@@ -93,20 +83,13 @@ const useAuthStore = create(
         }
       },
 
-      // Register function
+      // Register
       register: async (email, password, name) => {
         set({ isLoading: true, error: null })
-        
         try {
-          const response = await api.post('/auth/register', {
-            email,
-            password,
-            name,
-          })
-
+          const response = await api.post('/auth/register', { email, password, name })
           const { token, user } = response.data
 
-          // Store token in localStorage
           localStorage.setItem('fiscalflow-token', token)
 
           set({
@@ -132,7 +115,7 @@ const useAuthStore = create(
         }
       },
 
-      // Logout function
+      // Logout
       logout: () => {
         localStorage.removeItem('fiscalflow-token')
         set({
@@ -143,19 +126,18 @@ const useAuthStore = create(
         })
       },
 
-      // Verify token and get user profile
+      // Verify token
       verifyToken: async () => {
         const token = localStorage.getItem('fiscalflow-token')
-        
         if (!token) {
+          set({ user: null, token: null, isAuthenticated: false })
           return false
         }
 
         set({ isLoading: true })
-        
         try {
           const response = await api.get('/auth/verify')
-          
+
           set({
             user: response.data.user,
             token,
@@ -163,7 +145,7 @@ const useAuthStore = create(
             isLoading: false,
             error: null,
           })
-          
+
           return true
         } catch {
           localStorage.removeItem('fiscalflow-token')
@@ -178,7 +160,7 @@ const useAuthStore = create(
         }
       },
 
-      // Get user profile
+      // Get profile
       getProfile: async () => {
         try {
           const response = await api.get('/auth/profile')
@@ -192,14 +174,15 @@ const useAuthStore = create(
     }),
     {
       name: 'fiscalflow-auth',
+      // Only persist token + user, NOT isAuthenticated
       partialize: (state) => ({
+        token: state.token,
         user: state.user,
-        isAuthenticated: state.isAuthenticated,
       }),
     }
   )
 )
 
-// Export the API instance for use in other components
+// Export API instance for use elsewhere
 export { api }
 export default useAuthStore

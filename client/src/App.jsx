@@ -11,16 +11,14 @@ function App() {
   const [hasInitialized, setHasInitialized] = useState(false)
 
   useEffect(() => {
-    // Only verify token once on app load
     const initializeAuth = async () => {
       if (!hasInitialized) {
         await verifyToken()
         setHasInitialized(true)
       }
     }
-
     initializeAuth()
-  }, []) // Empty dependency array - only run once
+  }, [hasInitialized, verifyToken])
 
   // Show loading screen while initializing
   if (!hasInitialized || isLoading) {
@@ -36,62 +34,56 @@ function App() {
 
   return (
     <Router>
-      <div className="App">
-        <Routes>
-          {/* Public Routes */}
-          <Route 
-            path="/auth" 
-            element={
-              isAuthenticated ? <Navigate to="/dashboard" replace /> : <Auth />
-            } 
-          />
-          
-          {/* Redirect /login and /register to /auth for convenience */}
-          <Route path="/login" element={<Navigate to="/auth" replace />} />
-          <Route path="/register" element={<Navigate to="/auth" replace />} />
-          
-          {/* Protected Routes */}
-          <Route 
-            path="/dashboard" 
-            element={
-              <ProtectedRoute>
-                <Dashboard />
-              </ProtectedRoute>
-            } 
-          />
-          
-          {/* Default redirect */}
-          <Route 
-            path="/" 
-            element={
-              isAuthenticated ? (
-                <Navigate to="/dashboard" replace />
-              ) : (
-                <Navigate to="/auth" replace />
-              )
-            } 
-          />
-          
-          {/* 404 fallback */}
-          <Route 
-            path="*" 
-            element={
-              <div className="min-h-screen flex items-center justify-center bg-gray-50">
-                <div className="text-center">
-                  <h1 className="text-4xl font-bold text-gray-900 mb-4">404</h1>
-                  <p className="text-gray-600 mb-4">Page not found</p>
-                  <a 
-                    href="/"
-                    className="text-indigo-600 hover:text-indigo-500 font-medium"
-                  >
-                    Go back home
-                  </a>
-                </div>
+      <Routes>
+        {/* Public Routes */}
+        <Route
+          path="/auth"
+          element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Auth />}
+        />
+        <Route path="/login" element={<Navigate to="/auth" replace />} />
+        <Route path="/register" element={<Navigate to="/auth" replace />} />
+
+        {/* Protected Routes */}
+        <Route
+          path="/dashboard"
+          element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Default redirect */}
+        <Route
+          path="/"
+          element={
+            isAuthenticated ? (
+              <Navigate to="/dashboard" replace />
+            ) : (
+              <Navigate to="/auth" replace />
+            )
+          }
+        />
+
+        {/* 404 fallback */}
+        <Route
+          path="*"
+          element={
+            <div className="min-h-screen flex items-center justify-center bg-gray-50">
+              <div className="text-center">
+                <h1 className="text-4xl font-bold text-gray-900 mb-4">404</h1>
+                <p className="text-gray-600 mb-4">Page not found</p>
+                <a
+                  href="/"
+                  className="text-indigo-600 hover:text-indigo-500 font-medium"
+                >
+                  Go back home
+                </a>
               </div>
-            } 
-          />
-        </Routes>
-      </div>
+            </div>
+          }
+        />
+      </Routes>
     </Router>
   )
 }
