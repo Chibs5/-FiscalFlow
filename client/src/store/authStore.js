@@ -13,28 +13,7 @@ const api = axios.create({
   },
 })
 
-// Request interceptor to add token to requests
-api.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('fiscalflow-token')
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`
-    }
-    return config
-  },
-  (error) => Promise.reject(error)
-)
-
-// Response interceptor to handle token expiration
-api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      localStorage.removeItem('fiscalflow-token')
-    }
-    return Promise.reject(error)
-  }
-)
+// Interceptors are attached after the store is defined to safely access its state
 
 const useAuthStore = create(
   persist(
@@ -130,7 +109,7 @@ const useAuthStore = create(
       verifyToken: async () => {
         const token = localStorage.getItem('fiscalflow-token')
         if (!token) {
-          set({ user: null, token: null, isAuthenticated: false })
+          set({ user: null, token: null, isAuthenticated: false, isLoading: false })
           return false
         }
 
@@ -181,6 +160,31 @@ const useAuthStore = create(
       }),
     }
   )
+)
+
+// Attach axios interceptors now that the store exists
+api.interceptors.request.use(
+  (config) => {
+    const { token } = useAuthStore.getState()
+    const effectiveToken = token || localStorage.getItem('fiscalflow-token')
+    if (effectiveToken) {
+      config.headers = config.headers || {}
+      config.headers.Authorization = `Bearer ${effectiveToken}`
+    }
+    return config
+  },
+  (error) => Promise.reject(error)
+)
+
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      // Fully reset auth state on unauthorized to avoid redirect loops
+      useAuthStore.getState().logout()
+    }
+    return Promise.reject(error)
+  }
 )
 
 // Export API instance for use elsewhere
