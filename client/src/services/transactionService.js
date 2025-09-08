@@ -1,32 +1,5 @@
 // src/services/transactionService.js
-import axios from 'axios'
-
-// Create axios instance with base configuration
-const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
-})
-
-// Add token to requests automatically
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('fiscalflow_token')
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`
-  }
-  return config
-})
-
-// Handle token expiration
-api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      // Token expired, redirect to login
-      localStorage.removeItem('fiscalflow_token')
-      window.location.href = '/login'
-    }
-    return Promise.reject(error)
-  }
-)
+import { api } from '../store/authStore'
 
 // Transaction API functions
 export const transactionService = {
